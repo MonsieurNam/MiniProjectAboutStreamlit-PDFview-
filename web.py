@@ -116,8 +116,8 @@ def main():
     st.title("NHÓM 1")
 
     # Định nghĩa thư mục dữ liệu và đường dẫn đến data_detail.txt
-    data_dir = r"C:\Users\monsi\Downloads\testdeployweb\data"
-    data_detail_path = r"C:\Users\monsi\Downloads\testdeployweb\data_detail.txt"
+    data_dir = "./data"
+    data_detail_path = "data_detail.txt"
 
     # Phân tích data_detail.txt để lấy các phần
     sections = parse_data_detail(data_detail_path)
