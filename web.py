@@ -112,8 +112,8 @@ def initialize_session_state(total_pages=0):
         st.session_state.total_pages = total_pages
 
 def main():
-    st.set_page_config(page_title="NHÓM 1", layout="wide")
-    st.title("NHÓM 1")
+    st.set_page_config(page_title="Giáo dục Tiểu học Khóa 48-A2", layout="wide")
+    st.title("Giáo dục Tiểu học Khóa 48-A2")
 
     # Định nghĩa thư mục dữ liệu và đường dẫn đến data_detail.txt
     data_dir = "./data"
