@@ -71,13 +71,13 @@ def parse_data_detail(file_path: str):
                 line = line.strip()
                 if not line:
                     continue
-                parts = line.split('-')
+                parts = line.split('#')  # Cập nhật để tách bằng '#'
                 if len(parts) < 3:
                     st.warning(f"Bỏ qua dòng không hợp lệ trong data_detail.txt: {line}")
                     continue
                 start_page = int(parts[0])
                 end_page = int(parts[1])
-                name = '-'.join(parts[2:]).strip()
+                name = parts[2].strip()
                 sections.append({
                     'start': start_page,
                     'end': end_page,
@@ -126,20 +126,33 @@ def main():
         st.error("Không tìm thấy phần hợp lệ. Vui lòng kiểm tra tệp data_detail.txt của bạn.")
         return
 
-    # Thanh bên để chọn phần và tùy chọn hiển thị
-    st.sidebar.header("Chọn Phần")
-    section_names = [section['name'] for section in sections]
-    selected_section_name = st.sidebar.selectbox("Chọn một phần:", section_names)
+    # Thanh bên để chọn phần chính (I hoặc II)
+    st.sidebar.header("Chọn Phần Chính")
+    main_sections = [section for section in sections if section['name'].startswith("I.") or section['name'].startswith("II.")]
+    selected_main_section = st.sidebar.selectbox("Chọn một phần chính:", [section['name'] for section in main_sections])
 
-    # Tìm chi tiết của phần đã chọn
-    selected_section = next((s for s in sections if s['name'] == selected_section_name), None)
+    # Tìm phần chính đã chọn
+    selected_main_section_details = next((s for s in sections if s['name'] == selected_main_section), None)
 
-    if not selected_section:
-        st.error("Không tìm thấy phần đã chọn.")
-        return
+    # Nếu phần chính là II, cho phép chọn các phần con
+    if selected_main_section.startswith("II."):
+        st.sidebar.header("Chọn Phần Con")
+        sub_sections = [section for section in sections if section['start'] >= selected_main_section_details['start'] and section['start'] <= selected_main_section_details['end'] and not section['name'].startswith("I.")]
+        selected_sub_section_name = st.sidebar.selectbox("Chọn một phần con:", [section['name'] for section in sub_sections])
+        
+        # Tìm chi tiết của phần con đã chọn
+        selected_sub_section = next((s for s in sections if s['name'] == selected_sub_section_name), None)
+        
+        if not selected_sub_section:
+            st.error("Không tìm thấy phần đã chọn.")
+            return
+        
+        # Tạo danh sách số trang cho phần đã chọn
+        page_numbers = get_page_numbers(selected_sub_section)
+    else:
+        # Nếu phần chính là I, hiển thị nội dung tương ứng
+        page_numbers = get_page_numbers(selected_main_section_details)
 
-    # Tạo danh sách số trang cho phần đã chọn
-    page_numbers = get_page_numbers(selected_section)
     total_pages = len(page_numbers)
 
     # Khởi tạo trạng thái phiên
@@ -150,12 +163,29 @@ def main():
     show_text = st.sidebar.checkbox("Hiển Thị Văn Bản Đã Trích Xuất", value=True)
     zoom_factor = st.sidebar.slider("Mức Thu Phóng", min_value=1.0, max_value=3.0, value=1.5, step=0.1)
 
-    # Nhúng JavaScript để bắt phím và cập nhật session_state (Đã loại bỏ do không cần thiết)
-    # Vì giờ tất cả các trang đều được hiển thị cùng lúc và không cần điều hướng bằng phím
+    # Màn hình chính: Hiển thị toàn bộ các trang PDF của phần đã chọn
+    st.header(f"📄 {selected_sub_section_name if selected_main_section.startswith('II.') else selected_main_section}")
 
-    # Thêm trường nhập ẩn để nhận sự kiện phím, nhưng không cần thiết nữa
-    # Do đã loại bỏ việc điều hướng bằng phím, nên loại bỏ phần này
-    # key_pressed = st.text_input("Phím Nhấn", key="key_pressed", label_visibility='hidden')
+    for idx, page_num in enumerate(page_numbers, start=1):
+        # Xây dựng đường dẫn đến tệp PDF cho trang hiện tại
+        pdf_filename = f"page_{page_num:03}.pdf"
+        pdf_path = os.path.join(data_dir, pdf_filename)
+
+        if not os.path.isfile(pdf_path):
+            st.error(f"Không tìm thấy tệp PDF '{pdf_filename}' trong '{data_dir}'.")
+            continue
+
+        # Chuyển đổi và hiển thị trang PDF dưới dạng hình ảnh
+        try:
+            img_bytes = pymupdf_render_page_as_image(pdf_path, page_number=0, zoom=zoom_factor)
+            if img_bytes:
+                st.image(img_bytes, caption=f"Trang {page_num}", use_column_width=True)
+            else:
+                st.error("Không thể hiển thị hình ảnh trang.")
+        except Exception as e:
+            st.error(f"Lỗi hiển thị trang PDF: {e}")
+
+        st.markdown("---")  # Ngăn cách các trang
 
     # Sidebar: Phần hiển thị văn bản trích xuất và tải xuống dựa trên từng trang
     st.sidebar.header("Thông Tin Trang")
@@ -201,7 +231,7 @@ def main():
                         buffer.write(page_text.encode('utf-8'))
                         buffer.seek(0)
                         # Thay thế các ký tự không hợp lệ trong tên tệp
-                        safe_section_name = "".join(c for c in selected_section_name if c.isalnum() or c in (' ', '_', '-')).rstrip()
+                        safe_section_name = "".join(c for c in selected_sub_section_name if c.isalnum() or c in (' ', '_', '-')).rstrip()
                         download_filename = f"{safe_section_name}_Trang_{page_num}.txt"
                         st.download_button(
                             label="📄 Tải Xuống Văn Bản Đã Trích Xuất",
@@ -211,34 +241,6 @@ def main():
                         )
                     except Exception as e:
                         st.error(f"Lỗi chuẩn bị tải xuống văn bản: {e}")
-
-    # Màn hình chính: Hiển thị toàn bộ các trang PDF của phần đã chọn
-    st.header(f"📄 {selected_section_name}")
-
-    for idx, page_num in enumerate(page_numbers, start=1):
-        # Xây dựng đường dẫn đến tệp PDF cho trang hiện tại
-        pdf_filename = f"page_{page_num:03}.pdf"
-        pdf_path = os.path.join(data_dir, pdf_filename)
-
-        if not os.path.isfile(pdf_path):
-            st.error(f"Không tìm thấy tệp PDF '{pdf_filename}' trong '{data_dir}'.")
-            continue
-
-        # Chuyển đổi và hiển thị trang PDF dưới dạng hình ảnh
-        try:
-            img_bytes = pymupdf_render_page_as_image(pdf_path, page_number=0, zoom=zoom_factor)
-            if img_bytes:
-                st.image(img_bytes, caption=f"Trang {page_num}", use_column_width=True)
-            else:
-                st.error("Không thể hiển thị hình ảnh trang.")
-        except Exception as e:
-            st.error(f"Lỗi hiển thị trang PDF: {e}")
-
-        st.markdown("---")  # Ngăn cách các trang
-
-    # Loại bỏ các nút điều hướng vì giờ các trang được hiển thị cùng lúc
-
-    # Xử lý sự kiện nhấn phím để điều hướng trang (Đã loại bỏ)
 
 if __name__ == "__main__":
     main()
