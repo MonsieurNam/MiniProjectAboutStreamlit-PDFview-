@@ -128,16 +128,16 @@ def main():
 
     # Thanh bên để chọn phần chính (I hoặc II)
     st.sidebar.header("Chọn Phần Chính")
-    main_sections = [section for section in sections if section['name'].startswith("I.") or section['name'].startswith("II.")]
+    main_sections = [section for section in sections if section['name'].startswith("NHỮNG QUỐC GIA") or section['name'].startswith("XÂY DỰNG")]
     selected_main_section = st.sidebar.selectbox("Chọn một phần chính:", [section['name'] for section in main_sections])
 
     # Tìm phần chính đã chọn
     selected_main_section_details = next((s for s in sections if s['name'] == selected_main_section), None)
 
-    # Nếu phần chính là II, cho phép chọn các phần con
-    if selected_main_section.startswith("II."):
+    # Nếu phần chính là phần II, cho phép chọn các phần con
+    if selected_main_section.startswith("XÂY DỰNG"):
         st.sidebar.header("Chọn Phần Con")
-        sub_sections = [section for section in sections if section['start'] >= selected_main_section_details['start'] and section['start'] <= selected_main_section_details['end'] and not section['name'].startswith("I.")]
+        sub_sections = [section for section in sections if section['start'] >= selected_main_section_details['start'] and section['start'] <= selected_main_section_details['end']]
         selected_sub_section_name = st.sidebar.selectbox("Chọn một phần con:", [section['name'] for section in sub_sections])
         
         # Tìm chi tiết của phần con đã chọn
@@ -150,7 +150,7 @@ def main():
         # Tạo danh sách số trang cho phần đã chọn
         page_numbers = get_page_numbers(selected_sub_section)
     else:
-        # Nếu phần chính là I, hiển thị nội dung tương ứng
+        # Nếu phần chính là phần I, hiển thị nội dung tương ứng
         page_numbers = get_page_numbers(selected_main_section_details)
 
     total_pages = len(page_numbers)
@@ -164,7 +164,7 @@ def main():
     zoom_factor = st.sidebar.slider("Mức Thu Phóng", min_value=1.0, max_value=3.0, value=1.5, step=0.1)
 
     # Màn hình chính: Hiển thị toàn bộ các trang PDF của phần đã chọn
-    st.header(f"📄 {selected_sub_section_name if selected_main_section.startswith('II.') else selected_main_section}")
+    st.header(f"📄 {selected_sub_section_name if selected_main_section.startswith('XÂY DỰNG') else selected_main_section}")
 
     for idx, page_num in enumerate(page_numbers, start=1):
         # Xây dựng đường dẫn đến tệp PDF cho trang hiện tại
