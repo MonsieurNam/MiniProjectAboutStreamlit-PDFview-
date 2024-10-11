@@ -1,5 +1,5 @@
-001#009#I.NHỮNG QUỐC GIA ĐẦU TIÊN TRÊN LÃNH THỔ VIỆT NAM 
-010#082#II.XÂY DỰNG VÀ BẢO VỆ ĐẤT NƯỚC VIỆT NAM
+001#009#NHỮNG QUỐC GIA ĐẦU TIÊN TRÊN LÃNH THỔ VIỆT NAM 
+010#082#XÂY DỰNG VÀ BẢO VỆ ĐẤT NƯỚC VIỆT NAM
 010#016#Đấu tranh giành độc lập thời kì Bắc thuộc
 017#026#Triều Lý và việc định đô ở Thăng Long
 027#037#Triều Trần và kháng chiến chống Mông – Nguyên
