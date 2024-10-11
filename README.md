@@ -1,2 +1,2 @@
 ﻿# MiniProjectAboutStreamlit-PDFview-
-trying-"streahttps://huynhngoctramandfriendproject.streamlit.app"
+trying here-"https://huynhngoctramandfriendproject.streamlit.app"
